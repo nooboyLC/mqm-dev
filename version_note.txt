@@ -1,0 +1,108 @@
+================================================================================
+MAIL QUOTA MANAGER — VERSION RELEASE NOTES & CHANGELOG
+================================================================================
+
+================================================================================
+VERSION: D-0.0.2
+Release Date : 2026-10-07
+Platform     : Cross-Platform (Windows, Linux, macOS)
+Status       : Stable Release
+================================================================================
+
+1. OVERVIEW & SUMMARY
+Lightweight cross-platform email quota tracker with a modern web interface
+(Dark/Light mode, table sorting), SQLite WAL backend, zero-dependency
+portable launchers, and Dual-Git isolation architecture.
+
+2. KEY HIGHLIGHTS & CHANGELOG (D-0.0.2)
+* Dual Git Isolation:
+  - Master Project Git tracks entire root including '2 github/' hierarchy.
+  - Remote GitHub distributions operate cleanly without leaking local metadata.
+
+* '2 github/' Hierarchy Preservation:
+  - Distribution package organized under '2 github/' folder preserving full
+    project hierarchy for releases.
+
+* Strict Privacy & Zero-Leakage:
+  - Local SQLite database (mail_quota.db) and WAL temporary files strictly
+    isolated from public GitHub repositories.
+  - Pre-push firewall hook blocks accidental database pushes.
+
+* Test Automation & Quality Assurance:
+  - Comprehensive autonomous verification and auto-debug loop integrated
+    into system rules (AGENTS.md Directive 11).
+
+* Optimized Git Ignore:
+  - Expanded pattern coverage for SQLite WAL journal files (*.db-wal, *.db-shm).
+
+3. PROJECT STRUCTURE (D-0.0.2)
+project_Mail Quota Manager/
+  ├── .git/                               # Master Project Git Repo
+  ├── .gitignore                          # Cache & runtime ignore rules
+  ├── AGENTS.md                           # Master Rulebook & System Memory
+  ├── version_note.txt                    # Version release notes & changelog
+  ├── Chat session_summary_2026-09-17.md  # Historical log
+  └── 2 github/                           # Distribution release folder
+      ├── README.md                       # User manual & quickstart
+      ├── app/                            # Flask backend & Web UI
+      ├── cmdS/                           # Portable launchers & cleaners
+      └── data/                           # Local database (mail_quota.db)
+
+================================================================================
+VERSION: D-0.0.1
+Release Date : 2026-09-17
+Platform     : Cross-Platform (Windows, Linux, macOS)
+Status       : Stable Initial Release
+================================================================================
+
+1. OVERVIEW
+Mail Quota Manager is a lightweight, cross-platform email quota and reset date
+tracker. It operates with a web-based user interface backed by an isolated
+local SQLite database and self-contained zero-dependency portable runtime.
+
+2. KEY FEATURES & HIGHLIGHTS (D-0.0.1)
+* Web Interface:
+  - Dark Mode & Light Mode toggle with preference saved in localStorage.
+  - Interactive table header column sorting (A-Z, Z-A) for Email, Date, Status.
+  - Real-time search/filter for emails and reset dates.
+  - Visual status chips ("Available" in green vs "Waiting" in amber).
+  - Inline date editor and delete confirmation.
+
+* Background Process & Lifecycle:
+  - Windows: Runs decoupled using pythonw.exe; CMD window can be closed freely 
+    without stopping the web application.
+  - Linux/macOS: Background nohup daemon process.
+  - Single-browser tab launch (fixed duplicate window opening on startup).
+  - Safe localhost-only graceful shutdown via the "Quit App" button in the UI.
+
+* Security & Data Integrity:
+  - Strict RFC-compliant email regex validation preventing malformed & XSS payloads.
+  - Strict ISO-8601 date parsing (YYYY-MM-DD).
+  - SQL parameterized queries preventing SQL injection vulnerabilities.
+  - HTML entity escaping (esc()) in UI rendering.
+  - SQLite WAL (Write-Ahead Logging) mode and foreign keys enabled.
+  - Case-insensitive duplicate email prevention (COLLATE NOCASE).
+
+* Cross-Platform Portable Scripts (cmdS/):
+  - run.bat / run.sh: Auto-bootstraps self-contained Python runtime on demand.
+  - clean.bat / clean.sh: Safe cache & runtime cleanup while preserving data.
+
+3. PROJECT STRUCTURE (D-0.0.1)
+mail_quota/
+  ├── app/
+  │   ├── templates/
+  │   │   └── index.html      (Web UI with Dark Mode & Sorting)
+  │   ├── app.py              (Flask Backend API & SQLite handler)
+  │   └── requirements.txt    (Dependencies)
+  ├── cmdS/
+  │   ├── clean.bat           (Windows deep cleanup)
+  │   ├── clean.sh            (Linux/macOS deep cleanup)
+  │   ├── run.bat             (Windows detached launcher)
+  │   └── run.sh              (Linux/macOS background launcher)
+  ├── data/
+  │   └── mail_quota.db       (Local SQLite Database)
+  ├── version.txt             (Version specification & release notes)
+  ├── .gitignore              (Git ignore configuration)
+  └── README.md               (Project documentation)
+
+================================================================================
