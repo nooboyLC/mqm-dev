@@ -1,0 +1,30 @@
+﻿# User Data & Database (Strictly Isolated & Private)
+data/
+*.db
+*.db-wal
+*.db-shm
+*backup*.db
+
+# Embedded & Virtual Environment Runtimes
+.runtime/
+venv/
+env/
+.venv/
+
+# Python compiled bytecode & caches
+__pycache__/
+*.py[cod]
+*.class
+*.pyc
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / IDE configuration
+.idea/
+.vscode/
+*.swp
+*.swo

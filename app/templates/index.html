@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mail Quota Manager</title>
+<style>
+/* ── CSS Variables for Light / Dark themes ── */
+:root {
+  --bg:        #f4f6f8;
+  --card-bg:   #ffffff;
+  --text:      #1e293b;
+  --sub-text:  #64748b;
+  --border:    #e2e8f0;
+  --input-bg:  #ffffff;
+  --th-bg:     #f8fafc;
+  --th-text:   #475569;
+  --row-hover: #f1f5f9;
+  --shadow:    rgba(0,0,0,0.08);
+  --accent:    #2563eb;
+  --accent-h:  #1d4ed8;
+  --danger:    #dc2626;
+  --danger-h:  #b91c1c;
+  --avail-bg:  #dcfce7; --avail-txt: #166534;
+  --wait-bg:   #fef3c7; --wait-txt:  #92400e;
+  --edit-bg:   #dbeafe; --edit-txt:  #1e40af;
+  --del-bg:    #fee2e2; --del-txt:   #991b1b;
+  --save-bg:   #dcfce7; --save-txt:  #166534;
+  --can-bg:    #f1f5f9;  --can-txt:  #475569;
+  --badge-bg:  #dbeafe; --badge-txt: #1e40af;
+  --sort-act:  #eff6ff;
+  --mode-icon: "🌙";
+}
+[data-theme="dark"] {
+  --bg:        #0f172a;
+  --card-bg:   #1e293b;
+  --text:      #e2e8f0;
+  --sub-text:  #94a3b8;
+  --border:    #334155;
+  --input-bg:  #1e293b;
+  --th-bg:     #162032;
+  --th-text:   #94a3b8;
+  --row-hover: #1e3a52;
+  --shadow:    rgba(0,0,0,0.4);
+  --accent:    #3b82f6;
+  --accent-h:  #60a5fa;
+  --danger:    #ef4444;
+  --danger-h:  #f87171;
+  --avail-bg:  #14532d; --avail-txt: #86efac;
+  --wait-bg:   #451a03; --wait-txt:  #fcd34d;
+  --edit-bg:   #1e3a5f; --edit-txt:  #93c5fd;
+  --del-bg:    #450a0a; --del-txt:   #fca5a5;
+  --save-bg:   #14532d; --save-txt:  #86efac;
+  --can-bg:    #1e293b; --can-txt:   #94a3b8;
+  --badge-bg:  #1e3a5f; --badge-txt: #93c5fd;
+  --sort-act:  #1e3a5f;
+  --mode-icon: "☀️";
+}
+
+*{box-sizing:border-box;transition:background-color 0.25s ease,color 0.2s ease,border-color 0.2s ease}
+body{margin:0;padding:28px 14px;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+.container{max-width:980px;margin:auto}
+.card{background:var(--card-bg);padding:24px;border-radius:12px;box-shadow:0 3px 15px var(--shadow);margin-bottom:18px;border:1px solid var(--border)}
+.header{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:12px}
+h1{margin:0;font-size:24px;color:var(--text)}
+h2{margin:0;font-size:20px;color:var(--text)}
+
+/* Dark mode toggle */
+.theme-btn{background:var(--card-bg);border:1px solid var(--border);color:var(--sub-text);border-radius:8px;height:38px;padding:0 14px;cursor:pointer;font-size:18px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.table-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.search-box{height:36px;border-radius:6px;border:1px solid var(--border);padding:0 12px;font-size:14px;width:240px;outline:none;background:var(--input-bg);color:var(--text)}
+.search-box:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,0.2)}
+.search-box::placeholder{color:var(--sub-text)}
+
+.form{display:grid;grid-template-columns:1fr 180px 100px;gap:10px;margin-top:16px}
+input,button{height:42px;border-radius:7px;font-size:15px}
+input:not(.edit-input):not(.search-box){border:1px solid var(--border);padding:0 12px;background:var(--input-bg);color:var(--text)}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,0.2)}
+button{border:0;cursor:pointer;padding:0 14px}
+.add{background:var(--accent);color:#fff}.add:hover{background:var(--accent-h)}
+.stop{background:var(--danger);color:#fff}.stop:hover{background:var(--danger-h)}
+
+.message{min-height:20px;margin-top:12px;font-size:14px;font-weight:500}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+th{background:var(--th-bg);font-size:14px;color:var(--th-text);font-weight:600}
+tr:hover td{background:var(--row-hover)}
+
+/* Sortable headers */
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{background:var(--row-hover);color:var(--text)}
+.sort-icon{display:inline-block;margin-left:5px;font-size:11px;color:var(--sub-text)}
+th.sort-active{color:var(--accent);background:var(--sort-act)}
+th.sort-active .sort-icon{color:var(--accent)}
+.sort-badge{font-size:10px;font-weight:bold;margin-left:3px;padding:1px 5px;border-radius:4px;background:var(--badge-bg);color:var(--badge-txt)}
+
+/* Status chips */
+.status{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}
+.available{background:var(--avail-bg);color:var(--avail-txt)}
+.waiting  {background:var(--wait-bg); color:var(--wait-txt)}
+
+/* Action buttons */
+.btn-sm{height:30px;font-size:13px;padding:0 11px;border-radius:6px;border:0;cursor:pointer;font-weight:500}
+.delete{background:var(--del-bg);color:var(--del-txt)}.delete:hover{filter:brightness(1.1)}
+.edit  {background:var(--edit-bg);color:var(--edit-txt)}.edit:hover{filter:brightness(1.1)}
+.save  {background:var(--save-bg);color:var(--save-txt)}.save:hover{filter:brightness(1.1)}
+.cancel{background:var(--can-bg); color:var(--can-txt)}.cancel:hover{filter:brightness(1.1)}
+.action-cell{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.edit-input{height:30px;font-size:13px;padding:0 8px;border:1px solid var(--accent);border-radius:6px;width:130px;background:var(--input-bg);color:var(--text)}
+.empty{text-align:center;color:var(--sub-text);padding:25px}
+.note{font-size:13px;color:var(--sub-text);margin-top:12px}
+
+@media(max-width:650px){
+  .form{grid-template-columns:1fr}
+  .header{flex-direction:column;align-items:flex-start}
+  .stop{width:100%}
+  .search-box{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ── Header Card ── -->
+<div class="card">
+  <div class="header">
+    <div class="header-left">
+      <h1>&#128231; Mail Quota Manager</h1>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark / Light mode">&#127769; Dark Mode</button>
+      <button class="stop" onclick="shutdownServer()">Stop Application</button>
+    </div>
+  </div>
+  <form id="mailForm" class="form">
+    <input id="email" type="email" placeholder="Email address" required>
+    <input id="resetDate" type="date" required>
+    <button class="add" type="submit">Add</button>
+  </form>
+  <div id="message" class="message"></div>
+  <div class="note">Data is stored locally in <b>data/mail_quota.db</b>. Stopping the server does not delete your data.</div>
+</div>
+
+<!-- ── Table Card ── -->
+<div class="card">
+  <div class="table-header">
+    <h2>Saved Emails</h2>
+    <input type="text" id="searchFilter" class="search-box" placeholder="&#128269; Search emails..." oninput="renderTable()">
+  </div>
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th class="sortable" data-col="num"    onclick="handleSort('num')"    title="Sort by index">#<span class="sort-icon" id="si-num">&#8597;</span></th>
+      <th class="sortable" data-col="email"  onclick="handleSort('email')"  title="Sort by email">Email<span class="sort-icon" id="si-email">&#8597;</span></th>
+      <th class="sortable" data-col="date"   onclick="handleSort('date')"   title="Sort by date">Reset Date<span class="sort-icon" id="si-date">&#9650;</span></th>
+      <th class="sortable" data-col="status" onclick="handleSort('status')" title="Sort by status">Status<span class="sort-icon" id="si-status">&#8597;</span></th>
+      <th>Action</th>
+    </tr></thead>
+    <tbody id="mailTableBody"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+const form        = document.getElementById("mailForm");
+const tbody       = document.getElementById("mailTableBody");
+const msgEl       = document.getElementById("message");
+const searchInput = document.getElementById("searchFilter");
+const themeBtn    = document.getElementById("themeToggle");
+const html        = document.documentElement;
+
+let cachedMails = [];
+let sortState   = { col: "date", dir: "asc" };
+
+/* ── Dark Mode ────────────────────────────────────────────────────────── */
+function applyTheme(dark){
+  html.setAttribute("data-theme", dark ? "dark" : "light");
+  themeBtn.innerHTML = dark ? "&#9728;&#65039; Light Mode" : "&#127769; Dark Mode";
+  localStorage.setItem("mqm-theme", dark ? "dark" : "light");
+}
+function toggleTheme(){
+  applyTheme(html.getAttribute("data-theme") !== "dark");
+}
+// Load saved preference (default: dark)
+applyTheme(localStorage.getItem("mqm-theme") !== "light");
+
+/* ── Helpers ──────────────────────────────────────────────────────────── */
+function today(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function esc(v){
+  return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"','&quot;').replaceAll("'","&#039;");
+}
+function showMsg(txt, ok){
+  msgEl.style.color = ok ? "var(--avail-txt)" : "var(--danger)";
+  msgEl.textContent = txt;
+}
+
+/* ── Sorting ──────────────────────────────────────────────────────────── */
+function handleSort(col){
+  sortState = { col, dir: sortState.col===col && sortState.dir==="asc" ? "desc" : "asc" };
+  updateSortUI();
+  renderTable();
+}
+function updateSortUI(){
+  ["num","email","date","status"].forEach(c => {
+    const th = document.querySelector(`th[data-col="${c}"]`);
+    const ic = document.getElementById("si-"+c);
+    if(!th || !ic) return;
+    if(c === sortState.col){
+      th.classList.add("sort-active");
+      const asc = sortState.dir === "asc";
+      const labels = { email: ["A-Z","Z-A"], date: ["Old","New"], status: ["Avail","Wait"], num: ["1&#8593;","9&#8593;"] };
+      const lbl = labels[c] || ["",""];
+      ic.innerHTML = (asc ? "&#9650;" : "&#9660;") + ` <span class="sort-badge">${asc ? lbl[0] : lbl[1]}</span>`;
+    } else {
+      th.classList.remove("sort-active");
+      ic.innerHTML = "&#8597;";
+    }
+  });
+}
+
+/* ── Filter + Sort + Render ───────────────────────────────────────────── */
+function renderTable(){
+  const q = searchInput.value.trim().toLowerCase();
+  let list = cachedMails.slice();
+  if(q) list = list.filter(m => m.email.toLowerCase().includes(q) || m.reset_date.includes(q));
+
+  const t = today();
+  const { col, dir } = sortState;
+  const m = dir === "asc" ? 1 : -1;
+  list.sort((a,b) => {
+    if(col==="num")    return (a.id - b.id) * m;
+    if(col==="email")  return a.email.localeCompare(b.email, undefined, {sensitivity:"base"}) * m;
+    if(col==="date")   return a.reset_date.localeCompare(b.reset_date) * m;
+    if(col==="status"){
+      const av = t >= a.reset_date ? 1 : 0, bv = t >= b.reset_date ? 1 : 0;
+      return av !== bv ? (bv - av) * m : a.reset_date.localeCompare(b.reset_date);
+    }
+    return 0;
+  });
+
+  if(!list.length){
+    tbody.innerHTML = `<tr><td colspan="5" class="empty">${cachedMails.length ? "No emails match your search." : "No emails saved yet."}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map((m,i) => {
+    const avail = t >= m.reset_date;
+    return `<tr id="row-${m.id}">
+      <td>${i+1}</td>
+      <td><b>${esc(m.email)}</b></td>
+      <td id="date-cell-${m.id}">${esc(m.reset_date)}</td>
+      <td><span class="status ${avail?"available":"waiting"}">${avail?"Available":"Waiting"}</span></td>
+      <td><div class="action-cell" id="actions-${m.id}">
+        <button class="btn-sm edit" onclick="startEdit(${m.id},'${esc(m.reset_date)}')">Edit Date</button>
+        <button class="btn-sm delete" onclick="deleteMail(${m.id})">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+/* ── API calls ────────────────────────────────────────────────────────── */
+async function loadMails(){
+  try{
+    const r = await fetch("/get-mails");
+    if(!r.ok) throw Error();
+    cachedMails = await r.json();
+    renderTable();
+  }catch{
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Unable to connect to the local server.</td></tr>';
+  }
+}
+
+function startEdit(id, cur){
+  document.getElementById("actions-"+id).innerHTML = `
+    <input class="edit-input" type="date" id="new-date-${id}" value="${cur}">
+    <button class="btn-sm save" onclick="saveDate(${id})">Save</button>
+    <button class="btn-sm cancel" onclick="renderTable()">Cancel</button>`;
+  setTimeout(()=>document.getElementById("new-date-"+id).focus(), 50);
+}
+
+async function saveDate(id){
+  const inp = document.getElementById("new-date-"+id);
+  if(!inp||!inp.value){ showMsg("Please pick a date.",false); return; }
+  try{
+    const r = await fetch("/update/"+id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reset_date:inp.value})});
+    const x = await r.json();
+    if(!r.ok){ showMsg(x.message||"Update failed.",false); return; }
+    showMsg(x.message, true);
+    await loadMails();
+  }catch{ showMsg("Network error during update.",false); }
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault(); msgEl.textContent="";
+  try{
+    const r = await fetch("/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:document.getElementById("email").value.trim(),reset_date:document.getElementById("resetDate").value})});
+    const x = await r.json();
+    if(!r.ok) throw Error(x.message||"Failed");
+    showMsg(x.message,true); form.reset(); await loadMails();
+  }catch(e){ showMsg(e.message,false); }
+});
+
+async function deleteMail(id){
+  if(!confirm("Delete this email record?")) return;
+  try{
+    const r = await fetch("/delete/"+id,{method:"POST"});
+    const x = await r.json();
+    if(!r.ok){ showMsg(x.message||"Delete failed.",false); return; }
+    await loadMails();
+  }catch{ showMsg("Network error during delete.",false); }
+}
+
+async function shutdownServer(){
+  if(!confirm("Stop the local application? Your saved data will remain in mail_quota.db.")) return;
+  try{ await fetch("/shutdown",{method:"POST"}); }
+  finally{ document.body.innerHTML='<div style="font-family:Arial;text-align:center;margin-top:100px;color:#94a3b8"><h2>Application stopped</h2><p>You can close this browser tab.</p><p>Run the launcher again to start it.</p></div>'; }
+}
+
+updateSortUI();
+loadMails();
+setInterval(loadMails, 60000);
+</script>
+</body></html>
